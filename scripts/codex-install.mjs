@@ -192,7 +192,12 @@ export function cmdRollback({ prefix }) {
   for (const rel of SIGN_TARGETS) {
     const src = path.join(bk, rel.replace(/\//g, '__'));
     const dst = path.join(pkg, rel);
-    if (fs.existsSync(src)) { fs.copyFileSync(src, dst); restored = true; }
+    if (fs.existsSync(src)) {
+      const tmp = dst + '.restore';
+      fs.copyFileSync(src, tmp);
+      fs.renameSync(tmp, dst);
+      restored = true;
+    }
   }
   if (!restored) { console.error('❌ 备份内容为空'); process.exit(1); }
   relink(pkg);
