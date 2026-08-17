@@ -1,0 +1,15 @@
+# Codex on HarmonyOS 配置模板 —— 由 codex-harmonyos 提供
+# 默认模型: DeepSeek V4 Flash（直连 api.deepseek.com，Responses API）
+model = "deepseek-v4-flash"
+model_provider = "deepseek"
+
+[model_providers.deepseek]
+name = "DeepSeek"
+base_url = "https://api.deepseek.com"
+env_key = "DEEPSEEK_API_KEY"
+wire_api = "responses"
+
+# ---- 切到 OpenAI 内置后端（gpt 系列）----
+# model = "gpt-5.6-sol"
+# model_provider = "openai"
+# 环境变量: OPENAI_API_KEY=sk-...
