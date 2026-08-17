@@ -6,7 +6,7 @@
 
 - **现象**：执行 `codex` 或 `~/.local/bin/codex` 报 `Permission denied`（EACCES），文件明明有执行权限却跑不起来。
 - **原因**：鸿蒙 execve 会做 ELF 代码签名校验，未注入 `.codesign` 段的二进制直接返回 EACCES。
-- **解决**：跑 `sh scripts/codex-install.sh install` 重签。升级后必须重签（新二进制未带签名），install 为幂等操作，已装会重链并确保签名。
+- **解决**：跑 `sh scripts/codex-install.sh install`：未安装或换版本时会全量下载并签名；若同版本已装被幂等跳过，删 `~/.codex-hm/codex-<版本>/.installed` 标记后重跑 install 强制重装签名，或对目标二进制手动运行 `tools/self-sign.py`（先 `llvm-objcopy --remove-section .codesign` 剥旧段）。
 
 ## 2. 报 `error sending request`（HTTPS）
 

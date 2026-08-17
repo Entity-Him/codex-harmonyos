@@ -62,10 +62,12 @@ codex exec --skip-git-repo-check "你好"
 
 | 子命令 | 作用 | 常用参数 |
 | --- | --- | --- |
-| `install` | 下载 `linux-arm64` tarball → self-sign 签名 → 软链 → 合并 `config.toml`（幂等，已装则重链重签） | `--version 0.147.0`、`--prefix ~/.codex-hm` |
+| `install` | 下载 `linux-arm64` tarball → self-sign 签名 → 软链 → 合并 `config.toml`（幂等：同版本已装则跳过下载/签名，仅重链） | `--version 0.147.0`、`--prefix ~/.codex-hm` |
 | `verify` | 校验二进制可执行 + `--version` + 对话探活 | — |
 | `update` | 先备份当前签名二进制，再安装新版本并校验 | `--version` |
 | `rollback` | 从最近一次备份恢复签名二进制（自动用「写临时文件 + rename」绕过 HMFS 密封） | `--prefix` |
+
+> 若签名失效需重签：删 `~/.codex-hm/codex-<版本>/.installed` 标记后重跑 install，会强制全量重装并重签。
 
 通用参数：
 
@@ -103,7 +105,7 @@ wire_api = "responses"
 
 **签名机制原理**：鸿蒙 execve 校验 ELF 的 `.codesign` 段（fs-verity 风格）。`tools/self-sign.py`（Python3，仅用 `hashlib`）给 ELF 末尾注入 4KB 对齐的 `.codesign` 段，写入 merkle 根哈希 + descriptor + SHA-256 签名，以 `FLAG_SELF_SIGN` 让验签侧按自签名识别。与上游 binary-sign-tool 产物在段级等价。
 
-**何时需重签**：升级后新二进制未签名，必须重签。安装器的 `install` 每次从全新 tarball 解压（天然无旧段）后即签名；`update` 备份旧签名二进制以便回滚。注意 `self-sign.py` 只加签、不剥旧段，手动重签同一文件前需先 `llvm-objcopy --remove-section .codesign <elf>`。
+**何时需重签**：升级后新二进制未签名，必须重签。安装器的 `install` 在首次安装或换版本时从全新 tarball 解压（天然无旧段）后即签名；同版本已装则幂等跳过，仅重链。`update` 备份旧签名二进制以便回滚。注意 `self-sign.py` 只加签、不剥旧段，手动重签同一文件前需先 `llvm-objcopy --remove-section .codesign <elf>`。
 
 ## 8. 限制
 
