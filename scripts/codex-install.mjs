@@ -117,6 +117,7 @@ export async function cmdInstall({ version, prefix }) {
   console.log('📦 解压');
   const r0 = spawnSync('tar', ['-xzf', tgz, '-C', path.join(root, `codex-${ver}`)], { stdio: 'inherit' });
   if (r0.status !== 0) throw new Error('tar 解压失败');
+  fs.unlinkSync(tgz);
 
   console.log('✍ 签名（self-sign.py 注入 .codesign 段）');
   for (const rel of SIGN_TARGETS) {
@@ -152,6 +153,53 @@ export function cmdVerify() {
   else { console.warn('⚠️ 探活异常:', (r2.stdout || r2.stderr || '').slice(-300)); process.exit(1); }
 }
 
+function backupDir(root) {
+  return path.join(root, '.codex-backups', new Date().toISOString().replace(/[:.]/g, '-'));
+}
+
+export function cmdUpdate({ version, prefix }) {
+  const root = prefix || path.join(HOME, '.codex-hm');
+  const cur = fs.readdirSync(root)
+    .filter((d) => d.startsWith('codex-') && fs.statSync(path.join(root, d)).isDirectory());
+  if (cur.length) {
+    const bk = backupDir(root);
+    fs.mkdirSync(bk, { recursive: true });
+    for (const dir of cur) {
+      const pkg = path.join(root, dir, 'package');
+      for (const rel of SIGN_TARGETS) {
+        const f = path.join(pkg, rel);
+        if (fs.existsSync(f)) {
+          fs.copyFileSync(f, path.join(bk, rel.replace(/\//g, '__')));
+        }
+      }
+    }
+    console.log(`📦 已备份当前 ${cur.join(', ')} 到 ${bk}`);
+  }
+  cmdInstall({ version, prefix }).then(() => cmdVerify());
+}
+
+export function cmdRollback({ prefix }) {
+  const root = prefix || path.join(HOME, '.codex-hm');
+  const bks = fs.existsSync(path.join(root, '.codex-backups'))
+    ? fs.readdirSync(path.join(root, '.codex-backups')).sort() : [];
+  if (!bks.length) { console.error('❌ 无可用备份'); process.exit(1); }
+  const bk = path.join(root, '.codex-backups', bks[bks.length - 1]);
+  const dirs = fs.readdirSync(root)
+    .filter((d) => d.startsWith('codex-') && fs.statSync(path.join(root, d)).isDirectory())
+    .sort();
+  const pkg = path.join(root, dirs[dirs.length - 1], 'package');
+  let restored = false;
+  for (const rel of SIGN_TARGETS) {
+    const src = path.join(bk, rel.replace(/\//g, '__'));
+    const dst = path.join(pkg, rel);
+    if (fs.existsSync(src)) { fs.copyFileSync(src, dst); restored = true; }
+  }
+  if (!restored) { console.error('❌ 备份内容为空'); process.exit(1); }
+  relink(pkg);
+  console.log(`↩ 已从 ${bk} 恢复签名二进制`);
+  cmdVerify();
+}
+
 // ---- CLI 入口 ----
 
 const argv = process.argv.slice(2);
@@ -164,5 +212,7 @@ for (let i = 1; i < argv.length; i++) {
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (cmd === 'install') cmdInstall(args).catch((e) => { console.error('❌', e.message); process.exit(1); });
   else if (cmd === 'verify') cmdVerify();
-  else { console.error('用法: install|verify（update/rollback 见任务 4）'); process.exit(2); }
+  else if (cmd === 'update') cmdUpdate(args);
+  else if (cmd === 'rollback') cmdRollback(args);
+  else { console.error('用法: install|verify|update [--version]|rollback [--prefix]'); process.exit(2); }
 }
