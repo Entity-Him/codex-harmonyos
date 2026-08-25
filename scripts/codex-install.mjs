@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // codex-install.mjs — Codex CLI 鸿蒙安装/验证/升级/回滚（零依赖，node 内置模块）
 // 用法:
-//   node codex-install.mjs install [--version 0.147.0] [--prefix ~/.codex-hm]
+//   node codex-install.mjs install [--version 0.149.1] [--prefix ~/.codex-hm]
 //   node codex-install.mjs verify
-//   node codex-install.mjs update [--version 0.147.0]
+//   node codex-install.mjs update [--version 0.149.1]
 //   node codex-install.mjs rollback
 import fs from 'node:fs';
 import path from 'node:path';

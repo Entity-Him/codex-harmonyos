@@ -2,7 +2,7 @@
 
 让人人可复刻的方案：在鸿蒙 PC 上跑起 OpenAI Codex CLI，直连 DeepSeek 或 OpenAI。零二进制、零原生模块、纯文本工具链，一个脚本装好。
 
-已实测：本机跑通 `codex-cli 0.147.0`（linux-arm64），DeepSeek 直连 `https://api.deepseek.com`（Responses API，**不带 /v1**），默认模型 `deepseek-v4-flash`。
+已实测：本机跑通 `codex-cli 0.149.1`（linux-arm64），DeepSeek 直连 `https://api.deepseek.com`（Responses API，**不带 /v1**），默认模型 `deepseek-v4-flash`。
 
 ## 1. 简介
 
@@ -62,7 +62,7 @@ codex exec --skip-git-repo-check "你好"
 
 | 子命令 | 作用 | 常用参数 |
 | --- | --- | --- |
-| `install` | 下载 `linux-arm64` tarball → self-sign 签名 → 软链 → 合并 `config.toml`（幂等：同版本已装则跳过下载/签名，仅重链） | `--version 0.147.0`、`--prefix ~/.codex-hm` |
+| `install` | 下载 `linux-arm64` tarball → self-sign 签名 → 软链 → 合并 `config.toml`（幂等：同版本已装则跳过下载/签名，仅重链） | `--version 0.149.1`、`--prefix ~/.codex-hm` |
 | `verify` | 校验二进制可执行 + `--version` + 对话探活 | — |
 | `update` | 先备份当前签名二进制，再安装新版本并校验 | `--version` |
 | `rollback` | 从最近一次备份恢复签名二进制（自动用「写临时文件 + rename」绕过 HMFS 密封） | `--prefix` |
