@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const HOME = process.env.HOME || '/storage/Users/currentUser';
-export const NODE_BIN = process.env.NODE_BIN || '/data/service/hnp/node.org/node_v24.13.0/bin/node';
+export const NODE_BIN = process.env.NODE_BIN || '/storage/Users/currentUser/deveco/deveco_tools/node/bin/node';
 export const PYTHON_BIN = process.env.PYTHON_BIN || '/data/service/hnp/bin/python3';
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const REGISTRY = 'https://registry.npmjs.org/@openai/codex';

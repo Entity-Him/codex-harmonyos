@@ -124,6 +124,13 @@ wire_api = "responses"
 
 ## 10. 更新记录
 
+### 2026-08-25 — 升级实测至 codex 0.149.1
+
+- 本机实测 `codex-cli 0.149.1`（linux-arm64），对话探活通过
+- 0.149 新增：交互式 `codex agents` 任务仪表盘、`codex queue` 给已有会话发消息、TUI `/cd` `/pwd` `/cwd`、`codex doctor` 系统诊断
+- 包结构不变：签名目标仍为 `bin/codex`、`codex-code-mode-host`、`codex-path/rg`，安装脚本逻辑零改动
+- 修复：鸿蒙默认 node v24.13 跑安装脚本会崩（V8 errno 断言），`NODE_BIN` 默认改为本机 deveco node v22.7.0（可用 `NODE_BIN=...` 覆盖）
+
 ### 2026-08-17 — 首发：鸿蒙一键移植包
 
 - 安装/校验/升级/回滚四子命令，幂等可复跑
