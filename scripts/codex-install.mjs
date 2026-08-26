@@ -94,13 +94,13 @@ function printEnvHint() {
   console.log('下一步: codex exec --skip-git-repo-check "你好"');
 }
 
-export async function cmdInstall({ version, prefix }) {
+export async function cmdInstall({ version, prefix, force }) {
   const root = prefix || path.join(HOME, '.codex-hm');
   const { version: ver, url } = await resolveTarball(version);
   const pkg = path.join(root, `codex-${ver}`, 'package');
   const marker = path.join(root, `codex-${ver}`, '.installed');
 
-  if (fs.existsSync(marker)) {
+  if (fs.existsSync(marker) && !force) {
     relink(pkg);
     ensureConfig();
     console.log(`✅ 已安装 codex ${ver}（幂等跳过），重新软链`);
@@ -145,7 +145,7 @@ export function cmdVerify() {
   const r1 = spawnSync(link, ['--version'], { encoding: 'utf8' });
   const ver = (r1.stdout || '').trim().split('\n')[0] || (r1.stderr || '').trim().split('\n')[0];
   console.log('版本:', ver);
-  if (r1.status !== 0) { console.error('❌ 二进制不可执行（未签名或签名失效，跑 install/update 重签）'); process.exit(1); }
+  if (r1.status !== 0) { console.error('❌ 二进制不可执行（未签名或签名失效，跑 install --force 重签）'); process.exit(1); }
   if (!process.env.SSL_CERT_FILE) process.env.SSL_CERT_FILE = '/etc/ssl/certs/cacert.pem';
   if (!process.env.DEEPSEEK_API_KEY) process.env.DEEPSEEK_API_KEY = readApiKey('DEEPSEEK_API_KEY');
   if (!process.env.DEEPSEEK_API_KEY) { console.warn('⚠️ 可执行，但缺 DEEPSEEK_API_KEY（配 ~/.dsh/.credentials.yaml 或 export）'); process.exit(0); }
@@ -158,7 +158,7 @@ function backupDir(root) {
   return path.join(root, '.codex-backups', new Date().toISOString().replace(/[:.]/g, '-'));
 }
 
-export function cmdUpdate({ version, prefix }) {
+export function cmdUpdate({ version, prefix, force }) {
   const root = prefix || path.join(HOME, '.codex-hm');
   const cur = fs.readdirSync(root)
     .filter((d) => d.startsWith('codex-') && fs.statSync(path.join(root, d)).isDirectory());
@@ -176,7 +176,7 @@ export function cmdUpdate({ version, prefix }) {
     }
     console.log(`📦 已备份当前 ${cur.join(', ')} 到 ${bk}`);
   }
-  cmdInstall({ version, prefix }).then(() => cmdVerify());
+  cmdInstall({ version, prefix, force }).then(() => cmdVerify());
 }
 
 export function cmdRollback({ prefix }) {
@@ -210,15 +210,16 @@ export function cmdRollback({ prefix }) {
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
-const args = { version: null, prefix: null };
+const args = { version: null, prefix: null, force: false };
 for (let i = 1; i < argv.length; i++) {
   if (argv[i] === '--version') args.version = argv[++i];
   if (argv[i] === '--prefix') args.prefix = argv[++i];
+  if (argv[i] === '--force') args.force = true;
 }
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (cmd === 'install') cmdInstall(args).catch((e) => { console.error('❌', e.message); process.exit(1); });
   else if (cmd === 'verify') cmdVerify();
   else if (cmd === 'update') cmdUpdate(args);
   else if (cmd === 'rollback') cmdRollback(args);
-  else { console.error('用法: install|verify|update [--version]|rollback [--prefix]'); process.exit(2); }
+  else { console.error('用法: install|verify|update [--version]|rollback [--prefix] [--force]'); process.exit(2); }
 }
