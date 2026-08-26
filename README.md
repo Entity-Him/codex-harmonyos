@@ -139,3 +139,57 @@ wire_api = "responses"
 - 平台 tarball 直下，绕开 npm 平台检测失败
 - `SSL_CERT_FILE` 显式指定，绕开 rustls 缺根证书
 - vendor `tools/self-sign.py`，摆脱 `/dev/shm` 易失依赖
+
+
+---
+
+## 常见问题（Troubleshooting）
+
+### 1. `Permission denied (os error 13)` / `could not create PATH aliases`
+
+启动 `codex` 或跑 `verify` 时出现：
+
+```text
+WARNING: proceeding, even though we could not create PATH aliases: Permission denied (os error 13)
+Error: failed to initialize in-process app-server client: Permission denied (os error 13)
+```
+
+多半是 `CODEX_HOME` 指向了系统受限目录（例如 `CODEX_HOME=/data/codex`），Codex 无法在其中创建
+临时目录/socket。改回用户可写目录：
+
+```sh
+export CODEX_HOME="$HOME/.codex"
+echo 'export CODEX_HOME="$HOME/.codex"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+`TMPDIR` 同理，要指向可写目录，例如 `$HOME/.codex/tmp`：
+
+```sh
+mkdir -p ~/.codex/tmp
+export TMPDIR="$HOME/.codex/tmp"
+```
+
+### 2. `ERROR: Reconnecting... waiting for network`
+
+`codex exec` 一直重连，先确认能访问模型 API（如 DeepSeek）：
+
+```sh
+curl -v -m 8 https://api.deepseek.com/v1/models
+```
+
+- `curl` 不通：检查系统网络/代理是否开启。
+- 存在 `CODEX_SANDBOX_NETWORK_DISABLED` 且为真：`unset CODEX_SANDBOX_NETWORK_DISABLED`。
+- 确认 `DEEPSEEK_API_KEY` 已设置。
+
+### 3. 二进制不可执行 / 签名失效
+
+`verify` 报 `二进制不可执行` 时，用 `--force` 强制重新下载并签名：
+
+```sh
+sh scripts/codex-install.sh install --force
+```
+
+### 4. `ENOENT ... .codex/config.toml`
+
+首次安装时 `.codex` 目录不存在，脚本已改为自动创建。旧版本请先更新仓库后再安装。
