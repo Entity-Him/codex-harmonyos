@@ -77,6 +77,7 @@ function ensureConfig() {
   const cfg = path.join(HOME, '.codex', 'config.toml');
   const template = fs.readFileSync(TEMPLATE, 'utf8');
   const block = extractProviderBlock(template);
+  fs.mkdirSync(path.dirname(cfg), { recursive: true });
   if (fs.existsSync(cfg)) {
     const merged = mergeConfig(fs.readFileSync(cfg, 'utf8'), block);
     fs.writeFileSync(cfg, merged);
